@@ -110,11 +110,77 @@ Threads包下具有
 以Add为例，即为`Add[tasksize=s](...)`。
 
 ## Threads基础实现
-+ Create
-+ Self
-+ Sleep
-+ Wait
++ Create--用于创建一个线程来计算表达式
++ Self----用于返回线程id
++ Sleep---用于线程睡眠
++ Wait----等待某个线程结束
+
+### Create
+Create 用于创建一个线程，并返回一个线程id，可以用于传递给 Wait 来等待线程结束。
+```
+Create(expr,var,opt1,...)
+```
+其中`expr`是需要在新的线程中计算的表达式
++ 如果 `expr` 是一个函数调用，则参数的计算将在当前线程完成，具体的调用将在新的线程完成。
++ 否则，整个表达式都将在新的线程中完成。
+其中`var`可以用于接收`expr`的返回值。
+```
+with(Threads):
+id:=Create(int(sin(x)^x,x),res);
+res;
+Wait(id);
+res;
+```
+
+### Sleep
+```
+Sleep(n)
+```
+可以使当前线程水面`n`秒，`n`也可以是小于1的数。
+
+注意不要使用`Sleep`来同步线程，使用`Mutex`或者`ConditionVariable`。
+
+### Self
+`Self()`用于返回当前线程的id，主线程的id为0.
+
+### Wait
+```
+Wait(id1,id2,...)
+```
+等待id列表中所有的线程结束
 
 ## Mutex
+Mutex用于对操作进行加锁同步。
++ Create 创建一个新的锁
++ Destroy 释放一个锁的相关资源
++ Lock 加锁
++ Unlock 解锁
+
+Maple2016提供了`option lock`。
+
+```
+with(Threads:-Mutex):
+with(Threads:-Task):
+m:=Create();
+c:=1;
+fun:=proc()
+    global c,m;
+    Lock(m);
+    print(c);
+    c:=c+1;
+    Unlock(m); 
+end proc:
+Start(null,Tasks=[fun,seq([],i=1..10)]);
+Destroy(m);
+```
 
 ## ConditionVariable
+ConditionVariable提供了更加丰富的同步功能，两个典型的应用是：
++ 在某些点交换数据
++ 生产者-消费者模型：生产者提供任务，通知消费者来完成任务。
+ConditionVariable和Mutex的主要区别在于， ConditionVariable可以选择使通知一个等待线程，还是通知所有等待线程。
++ Create------创建 
++ Destroy-----销毁
++ Wait--------等待
++ Signal------通知一个
++ Broadcast---通知全部
