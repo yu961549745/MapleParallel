@@ -303,3 +303,40 @@ Grid:-Launch(fun,imports={'x','y'},exports={'x','w'});
 + 需要考虑 Barrier 的特性和 node0 返回的特性。
 
 ## 进程通信
+```
+Send(node,msg)
+```
++ node 指定节点编号
++ msg 可以是任意类型的参数，可以为NULL和seq，但是具有last name evaluation的嵌套表达式不会对子表达式进行求值。
++ Send只有在传输阶段会中断程序，传输完成后立即返回NULL，不管是否Receive。
++ 所有计算都已经完成的死锁可以被自动检测并终止。
+
+```
+Receive()
+Receive(node)
+```
++ 在接收到信息前会中断进程，若指定了node则接收到了该node的信息再终止，若不指定，则在接收到第一个参数后终止。
+
+
+```
+N:=kernelopts(numcpus):
+x:=Array(1..N):
+fun:=proc()
+    uses Grid;
+    global x;
+    local node,i,id,v;
+    node:=MyNode();
+    if node<>0 then
+        Send(0,node,node^2);
+    else
+        for i from 1 to NumNodes()-1 do
+            id,v:=Receive();
+            x[id+1]:=v;
+        end do;
+        x[1]:=0;
+    end if;
+    return NULL;
+end proc:
+Grid:-Launch(fun,imports=["x"],exports=["x"]);
+print(convert(x,list));
+```
