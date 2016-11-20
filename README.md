@@ -184,3 +184,122 @@ ConditionVariable和Mutex的主要区别在于， ConditionVariable可以选择�
 + Wait--------等待
 + Signal------通知一个
 + Broadcast---通知全部
+
+# Grid
+Grid包在Maple15引入，并在Maple2015有较大更新。
+
++ 并行实现
+    + Map
+    + Seq
++ 基本用法
+    + Launch
+    + Barrier
+    + Interrupt
+    + MyNode
+    + NumNodes
++ 通信
+    + Send
+    + Receive
++ 服务器
+    + Status
+    + Setup
+    + Server
+    + Run[2015]
+    + Get[2015]
+    + GetLastResult[2015]
+    + Set[2015]
+    + Wait[2015]
+    + WaitForFirst[2015]
+
+## 基本用法
+
+### Launch
+```
+Launch(code,args,options)
+```
+
+参数                    | 意义
+------------------------|----------------------
+code                    | 命令字符串或者函数
+args                    | 传递的参数
+numnodes = posint       | 指定进程个数
+printer = procedure     | 输出回调函数
+checkabort = procedure  | 提前中断的回调函数
+imports = {list,set}    | 引入变量
+exports = {list,set}    | 导出变量
+clear = truefalse       | 是否清除状态
+allexternal = truefalse | 是否让node0在外部运行
+
++ code  可以是包含Maple命令的字符串，也可以是一个函数，但是需要这个函数不依赖于外部变量。
++ args  如果code是一个函数，则将会把args作为参数传递。
++ 所有node上执行的代码都是相同的，可以利用`MyNode`来分配不同的任务。
++ 整个任务将在node0结束后立即结束，其它节点将被中断。
++ 返回值是node0中的返回值。
++ numnodes 用于指定进程个数，在本地模式下，这个是由`kernerlopts(numcpus)`决定的，在远程模式下，这是由`Grid[Status]`的第二个返回参数决定的。
++ imports 用于导入当前变量，可以有3种形式：`name=value`,`assigned names`,`string representing global names`;
++ exports 用于返回node0中的变量，这个列表只能包含global names。 
++ printer 用于在具有外部字符串输出时调用，默认为`printf`,以一个字符串参数进行调用。
++ checkabort 一个无参调用的函数，将被周期性的调用，返回`true`则中断所有节点，返回`false`则继续执行。在本地模式下是无效的。
++ clear 仅在本地模式下使用，默认为`true`表示调用结束后重置各节点的状态。
++ allexternal 仅在本地模式下有效。
++ 在分布式模式下运行，需要预先进行配置。
+
+```
+fun:=proc()
+    uses Grid;
+    printf("node %d / %d --- %a \n",MyNode(),NumNodes(),[_passed]);
+    Barrier();
+end proc:
+Grid:-Launch(fun,1,2,3);
+Grid:-Launch("rand();"):
+```
+
+### Barrier
+Barrier ：
++ 用于中断所有node，直到所有node都执行了 Barrier 命令，可用于同步。
++ 在 hpc 模式下无效。
+
+### MyNode
+返回当前进程标记，标记为 0..(N-1)。
+
+### NumNodes
+返回总的进程个数
+
+### Interrupt
+```
+Interrupt()
+Interrupt(node)
+```
++ 用于中断一个进程
++ node为进程id
++ 无参调用可以在主线程中使用，用于停止由`Grid:-Run`所创建的命令
++ node0 不能被中断。
++ 中断进程造成的死锁能够被检测到，并自动终止相关进程。
++ mpi 模式下无效。
+
+### 一些例子
+```
+x:=1:y:=2:z:=3:w:=4:
+fun:=proc()
+    uses Grid;
+    global x,y,z;
+    local w:=1;
+    printf("%d --> %a \n",MyNode(),[x,y,z,w]);
+    x:=233+MyNode();
+    y:=666+MyNode();
+    z:=888+MyNode();
+    w:=999+MyNode();
+    Barrier();
+end proc:
+Grid:-Launch(fun,imports={'x','y'},exports={'x','w'});
+[x,y,z,w];
+```
++ x和z对比，说明全局变量必须声明imports才能导入。
++ x和y对比，说明全局变量必须声明exports才能导出。
++ x和w对比，说明全局变量才能导出，局部变量不行。
++ 返回结果表明，只有node0的全局变量值才有效。
+并且需要注意的是：
++ print/printf是原子的，但是各进程/线程之间的调用顺序是未知的，所以尽可能的在同一句输出，或者运行完成后再输出。
++ 需要考虑 Barrier 的特性和 node0 返回的特性。
+
+## 进程通信
