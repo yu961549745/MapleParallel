@@ -291,12 +291,12 @@ fun:=proc()
     w:=999+MyNode();
     Barrier();
 end proc:
-Grid:-Launch(fun,imports={'x','y'},exports={'x','w'});
+Grid:-Launch(fun,imports={'x','y'},exports={'x','z','w'});
 [x,y,z,w];
 ```
 + x和z对比，说明全局变量必须声明imports才能导入。
-+ x和y对比，说明全局变量必须声明exports才能导出。
-+ x和w对比，说明全局变量才能导出，局部变量不行。
++ z说明，全局变量声明了导出，修改就能生效。
++ w说明，说明全局变量才能导出，局部变量不行。
 + 返回结果表明，只有node0的全局变量值才有效。
 并且需要注意的是：
 + print/printf是原子的，但是各进程/线程之间的调用顺序是未知的，所以尽可能的在同一句输出，或者运行完成后再输出。
@@ -339,4 +339,25 @@ fun:=proc()
 end proc:
 Grid:-Launch(fun,imports=["x"],exports=["x"]);
 print(convert(x,list));
+```
+
+当一个进程需要接收其它进程的信息时，尽管写成如下形式，经简单测试，不会造成信息丢失，但总觉得不好。
+当接收无序输入时，还是推荐不要指定接收的节点编号。
+```
+fun:=proc()
+    uses Grid;
+    local node,i,N;
+    node:=MyNode();
+    N:=NumNodes();
+    if node<>0 then
+        Threads:-Sleep(N-node);
+        print(node);
+        Send(0,evalf(Pi-3+node,100));
+    else
+        for i from 1 to N-1 do
+            print(Receive(i));
+        end do;
+    end if;
+end proc:
+Grid:-Launch(fun);
 ```

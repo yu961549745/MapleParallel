@@ -10,5 +10,5 @@ fun:=proc()
     w:=999+MyNode();
     Barrier();
 end proc:
-Grid:-Launch(fun,imports={'x','y'},exports={'x','w'});
+Grid:-Launch(fun,imports={'x','y'},exports={'x','z','w'});
 [x,y,z,w];
