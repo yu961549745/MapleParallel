@@ -106,31 +106,27 @@ end proc:
     + 如果存在seq参数则会匹配到最后一个类型匹配的参数。
     + 如果还有剩余参数，若声明了`$`则报错，否则赋值给`_rest`
 
+而Grid:-Launch的推荐调用方式为
+```
+Grid:-Launch(code,args,options)
+```
 因此，可以分析得到，第一个参数因为是字符串或者函数，所以 NumNodes 会是默认值，
 然后调用命令是函数或者字符串，赋值给 code ，再之后的剩余参数作为函数的参数，
 但是问题在于还有 procedure 和 {set,list} 的参数类型匹配，所以不能直接传递这3种类型的参数，
-需要指定了这些参数对应的值之后，才能传递这些类型的参数，这个太麻烦了。
 
 这里给出了4种传递函数作为参数的方式
 ```
-f1:=proc()
-    return 1;
-end proc:
-f2:=proc()
-    return 2;
-end proc:
-f3:=proc()
-    return 3;
-end proc:
-f4:=proc()
-    return 4;
-end proc:
+f1:=proc() return 1; end proc:
+f2:=proc() return 2; end proc:
+f3:=proc() return 3; end proc:
+f4:=proc() return 4; end proc:
 fun:=proc(f1)
     global f2,f3,f4;
     print(f1(),f2(),f3(),f4());
 end proc:
 coverArgs:={},{}:
-Grid:-Launch(fun,coverArgs,eval(f1),imports=['f2',"f3",':-f4'=eval(f4)]);
+Grid:-Launch(fun,coverArgs,eval(f1),
+             imports=['f2',"f3",':-f4'=eval(f4)]);
 ```
 + 其中补位参数`converArgs`能够跳过 `procedure` 的匹配，做到不影响 `Printer`和`CheckAbort`的取值，
 + 然后又填充了 `Imports`和`Exports`, 在指定`imports`和`exports`这两个值并不影响结果，
