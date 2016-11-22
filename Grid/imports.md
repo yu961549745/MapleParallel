@@ -129,8 +129,8 @@ Grid:-Launch(fun,coverArgs,eval(f1),
              imports=['f2',"f3",':-f4'=eval(f4)]);
 ```
 + 其中补位参数`converArgs`能够跳过 `procedure` 的匹配，做到不影响 `Printer`和`CheckAbort`的取值，
-+ 然后又填充了 `Imports`和`Exports`, 在指定`imports`和`exports`这两个值并不影响结果，
-+ 又根据函数的 _last name evaluation_ 规则，传递函数的值需要 `eval`，
++ 然后又填充了 `Imports`和`Exports`, 在指定`imports`和`exports`之后，这两个值并不影响结果，
++ 又根据函数的 _last name evaluation_ 规则，传递函数需要 `eval`，否则只是一个名字，
 + 同时也说明了函数内部的其它函数不能直接展开，需要都传递给Grid.
 
 ## 总结
