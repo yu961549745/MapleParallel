@@ -361,3 +361,16 @@ fun:=proc()
 end proc:
 Grid:-Launch(fun);
 ```
+
+## 参数传递
+[参数传递]()
+三种imports方式可以分为两种类型:
++ assigned name, global name string : 从global空间提取对应信息，放入Grid命名空间中去。
++ name=value ： 从value取值，放入Grid命名空间的 name 中去。
+
+从上述总结可以看出，
++ 第一种类型的变量来源只能是global的，而第二种类型可以是local的。
+
+另外需要注意的是
++ 在传递procedure和module时，要注意_last name evaluation_ 的作用
++ 在传递 procedure / set / list 作为参数时，需要传入补位参数。
