@@ -363,7 +363,8 @@ Grid:-Launch(fun);
 ```
 
 ## 参数传递
-[参数传递]()
+[参数传递总结](https://github.com/yu961549745/MapleParallel/blob/master/Grid/imports.md)
+
 三种imports方式可以分为两种类型:
 + assigned name, global name string : 从global空间提取对应信息，放入Grid命名空间中去。
 + name=value ： 从value取值，放入Grid命名空间的 name 中去。
